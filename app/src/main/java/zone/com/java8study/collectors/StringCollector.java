@@ -48,11 +48,12 @@ public class StringCollector implements Collector<String, StringBuilder, String>
     public Set<Characteristics> characteristics() {
         return Collections.unmodifiableSet(
                 EnumSet.of(
-                        //支持并发特性
-                        Characteristics.CONCURRENT
+                        //特征支持并发特性
+                        // 开启后 即使是 .parallel()。combiner方法被忽略；
+//                        Characteristics.CONCURRENT ,
                         //todo ？？？
-                        , Characteristics.UNORDERED
-                        //忽略finisher方法 正确的说此时的finisher方法其实是indentity函数；
+                         Characteristics.UNORDERED
+                        //特征开启后 忽略finisher方法 正确的说此时的finisher方法其实是indentity函数；
 //                        ,Characteristics.IDENTITY_FINISH
                 ));
     }

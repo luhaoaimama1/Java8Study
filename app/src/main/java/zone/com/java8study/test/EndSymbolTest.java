@@ -58,10 +58,19 @@ public class EndSymbolTest {
         System.out.println("collect:" + Stream.of(1, 2, 3, 4, 5).collect(Collectors.toList()));
         System.out.println("collect:" + Stream.of(1, 2, 3, 4, 5).collect(Collectors.toSet()));
         //todo
-//        System.out.println("collect:"+ Stream.of(1, 2, 3, 4, 5)
-//                .collect(() ->Collectors.toList(),
-//                        (objectObjectListCollector, integer) ->String.valueOf(integer) ,
-//                        (objectObjectListCollector, objectObjectListCollector2) -> ));
+        System.out.println("collect:" +
+                Stream.of(1, 2, 3)
+                        .map(String::valueOf)
+                        .parallel()//开启并行才能弹出combiner方法内的日志；
+                        .collect(StringBuilder::new, (stringBuilder, s) -> {
+                            System.out.println("accumulator:" + s);
+                            stringBuilder.append(s);
+                        }, (stringBuilder, stringBuilder2) -> {
+                            //并行  .parallel()开启才会 弹出此日志
+                            System.out.println("combiner stringBuilder1:" + stringBuilder.toString()
+                                    + "\t stringBuilder2:" + stringBuilder2.toString());
+                            stringBuilder.append(stringBuilder2);
+                        }));
     }
 
     private static void findTest() {
