@@ -21,19 +21,29 @@ public class IOActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Arrays.asList("a","b").stream();
+        Arrays.asList("a", "b").stream();
         new HashSet<>().stream();
         new HashMap<>().entrySet().stream();
 
-        Stream.of("a","b","c").peek(String::toString).collect(Collectors.toList());
-        Stream.of("a","b","c").collect(Collectors.toSet());
-        Stream.of("a","b","c").collect(Collectors.toCollection(TreeSet::new));
-        BinaryOperator<String> a=(s, s2) -> s+s2;
-
+        Stream.of("a", "b", "c").peek(String::toString).collect(Collectors.toList());
+        Stream.of("a", "b", "c").collect(Collectors.toSet());
+        Stream.of("a", "b", "c").collect(Collectors.toCollection(TreeSet::new));
+        BinaryOperator<String> a = (s, s2) -> s + s2;
     }
 
     private void log() {
         System.out.println("hei");
+    }
+
+    public static void main(String[] args) {
+
+        Count count = new Count();
+        Stream.of(1, 2, 7).peek(integer -> count.count += 1).count();
+        System.out.println(count.count);
+    }
+
+    public static class Count {
+        int count;
     }
 
 }
