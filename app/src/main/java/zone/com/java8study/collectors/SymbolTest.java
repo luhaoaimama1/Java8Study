@@ -45,6 +45,12 @@ public class SymbolTest {
                 Collectors.mapping(o -> "新元素：" + String.valueOf(o)
                         , Collectors.toList())));
 
+        //collectingAndThen 收集之后装起来
+        //downstream :Collector,finisher 把downStream收集起来；
+        log("collectingAndThen:" + Stream.of(1, 2, 3, 4).collect(
+                Collectors.collectingAndThen(Collectors.toList(),
+                        integers -> integers.toArray())));
+
         //partitioningBy groupingBy 功能的简化,分组类型仅仅有两种 true false;
         log("partitioningBy:" + Stream.of(1, 2, 3, 4).collect(
                 Collectors.partitioningBy(o -> o % 2 == 0)));
@@ -52,15 +58,7 @@ public class SymbolTest {
         groupingByTest();
         joining();
         toCollection();
-
-        //collectingAndThen 收集之后装起来
-        //downstream :Collector,finisher 把downStream收集起来；
-        log("collectingAndThen:" + Stream.of(1, 2, 3, 4).collect(
-                Collectors.collectingAndThen(Collectors.toList(),
-                        integers -> integers.toArray())));
         reduceingTest();
-
-
     }
 
     private static void reduceingTest() {
