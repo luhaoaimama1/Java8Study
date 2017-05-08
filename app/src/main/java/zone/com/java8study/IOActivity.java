@@ -4,7 +4,10 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
@@ -18,6 +21,9 @@ public class IOActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Arrays.asList("a","b").stream();
+        new HashSet<>().stream();
+        new HashMap<>().entrySet().stream();
 
         Stream.of("a","b","c").peek(String::toString).collect(Collectors.toList());
         Stream.of("a","b","c").collect(Collectors.toSet());
