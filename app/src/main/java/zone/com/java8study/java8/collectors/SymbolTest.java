@@ -1,16 +1,13 @@
-package zone.com.java8study.collectors;
+package zone.com.java8study.java8.collectors;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import zone.com.java8study.GsonUtils;
+import zone.com.java8study.utils.GsonUtils;
 
 /**
  * [2017] by Zone

@@ -1,8 +1,5 @@
-package zone.com.java8study.test;
+package zone.com.java8study.java8.test;
 
-import junit.framework.Assert;
-
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

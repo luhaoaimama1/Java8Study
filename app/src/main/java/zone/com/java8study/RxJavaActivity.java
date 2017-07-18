@@ -2,8 +2,10 @@ package zone.com.java8study;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
 import java.util.stream.Stream;
-public class LambdaActivity extends AppCompatActivity {
+
+public class RxJavaActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -12,11 +14,6 @@ public class LambdaActivity extends AppCompatActivity {
     }
 
     public static void main(String[] args) {
-        boolean result = Stream.of(1, 2, 3, 4, 5).allMatch(integer -> integer==1);
-        System.out.println(result);
     }
 
-    private void log() {
-        System.out.println("hei");
-    }
 }

@@ -1,4 +1,4 @@
-package zone.com.java8study.collectors;
+package zone.com.java8study.java8.collectors;
 
 import java.util.Collections;
 import java.util.EnumSet;

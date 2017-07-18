@@ -1,6 +1,5 @@
-package zone.com.java8study.test.dil;
+package zone.com.java8study.java8.test.dil;
 
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 

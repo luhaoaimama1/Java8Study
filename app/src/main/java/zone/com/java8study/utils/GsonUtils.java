@@ -1,4 +1,4 @@
-package zone.com.java8study;
+package zone.com.java8study.utils;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Array;

@@ -1,4 +1,4 @@
-package zone.com.java8study.test;
+package zone.com.java8study.java8.test;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import zone.com.java8study.GsonUtils;
+import zone.com.java8study.utils.GsonUtils;
 
 /**
  * [2017] by Zone
