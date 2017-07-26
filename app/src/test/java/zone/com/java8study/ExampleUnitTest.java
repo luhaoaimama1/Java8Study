@@ -5,7 +5,11 @@ import android.os.Looper;
 import org.junit.Test;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
@@ -24,28 +28,41 @@ public class ExampleUnitTest {
 
     @Test
     public void bt_hello() {
-        Observable<String> observable = Observable.just("hello", "rxjava");
-//        observable.map(t -> t + "Zone").subscribe(o -> System.out.println(o));
-        observable
-                .observeOn(Schedulers.newThread())
-                .map(t -> t + "Zone")
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .subscribe(o -> {
-                    System.out.println("UI线程："+(Looper.myLooper() != Looper.getMainLooper()));
-                    System.out.println(o);
+        //创建一个上游 Observable：
+        Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
+                System.out.println("emit 1");
+                emitter.onNext(1);
+                System.out.println("onError");
+                emitter.onError(new Throwable("HEIHEI"));
+                System.out.println("onError");
+                emitter.onError(new Throwable("HEIHEI"));
+                System.out.println("emit 2");
+                emitter.onNext(2);
+            }
+        }).subscribe(//建立连接
+                new Observer<Integer>() { //创建一个下游 Observer
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        System.out.println("subscribe");
+                    }
+
+                    @Override
+                    public void onNext(Integer value) {
+                        System.out.println("onNext:" + value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        System.out.println("error");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        System.out.println("complete");
+                    }
                 });
-
-//        Observable.just("Hello, world!")
-//                .map(s -> s.hashCode())
-//                .map(s -> String.valueOf(s))
-//                .subscribe(i -> System.out.println(i));
-//        String[] ulrs = new String[]{"url1", "url2", "url3"};
-//        Observable.just("Hello","world!")
-//                .filter(s->s=="Hello")
-//                .flatMap(s-> Observable.from(ulrs).map(a->a+" "+s))
-//                .take(2)
-//                .subscribe(a-> System.out.println(a)).isUnsubscribed();
-
 
     }
 }

@@ -1,0 +1,30 @@
+
+
+xxxOpenings, closingSelector
+
+      * 每当 bufferOpenings 发射了一个数据时，它就 创建一个新的 List
+      * 开始收集原始Observable的数据，并将 bufferOpenings 传递
+
+      * 给 closingSelector 函数。这个函数返回一个Observable。
+      * buffer 监视这个Observable，当 它检测到一个来自这个Observable的数据时，
+      * 就关闭 List 并且发射它自己的数据(之前的那 个List)。
+
+      * 然后重复这个过程:开始组装一个新 的 List
+
+
+count,skip
+      * 发射[1-10]
+      * buffer count 2 skip 1,结果 [1,2]  [2,3] [3,4] 3=2*1+1
+      * buffer count 2 skip 2,结果 [1,2]  [3,4] [5,6] 5=2*2+1
+      * buffer count 2 skip 3,结果 [1,2]  [4,5] [7,8] 7=2*3+1;
+      * count 代表缓存的数量
+      * skip则代表 每次初始偏移量  每次真正的起始值=fistValue+skip*skipCount;
+
+
+timespan, unit, scheduler
+      * timespan与unit 组成时间
+      * scheduler 去指定执行线程
+
+delayErrors
+
+切记如果是同一线程则会顺序执行；例如一个obserable先发送完毕  另一个obaserable才发送~

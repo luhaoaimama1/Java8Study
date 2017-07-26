@@ -1,4 +1,4 @@
-package dragger.coffee;
+package zone.com.java8study.dragger.coffee;
 
 import dagger.Binds;
 import dagger.Module;
