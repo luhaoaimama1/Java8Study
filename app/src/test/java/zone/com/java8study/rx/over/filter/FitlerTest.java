@@ -1,15 +1,10 @@
-package zone.com.java8study.rx.filter;
+package zone.com.java8study.rx.over.filter;
 
 import org.junit.Test;
 
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.Observer;
-import io.reactivex.Scheduler;
-import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -40,22 +35,23 @@ public class FitlerTest {
 
         System.out.println("\ntakeLast2:");
 //       发射在原始Observable的生命周 期内最后一段时间内发射的数据
-        Observable.range(0,10)
-                .takeLast(100, TimeUnit.MILLISECONDS)
-                .subscribe(o -> System.out.print(o + "\t"));
+//        Observable.intervalRange(0,4,0,50,TimeUnit.MILLISECONDS)
+//                .takeLast(100, TimeUnit.MILLISECONDS)
+//                .subscribe(o -> System.out.print(o + "\t"));//2,3
 
         System.out.println("\ntakeUntil:");
         Observable.just(2,3,4,5)
                 //发送complete的结束条件 当然发送结束之前也会包括这个值
-                .takeUntil(integer ->  integer<=4)
+                .takeUntil(integer ->  integer>3)
                 .subscribe(o -> System.out.print(o + "\t"));//2,3,4
 
         System.out.println("\ntakeWhile:");
         Observable.just(2,3,4,5)
                 //当不满足这个条件 会发送结束 不会包括这个值
                 .takeWhile(integer ->integer<=4 )
-                .subscribe(o -> System.out.print(o + "\t"));//2,3
+                .subscribe(o -> System.out.print(o + "\t"));//2,3,4
         System.out.println("\n over");
+        while (true){}
     }
 
     @Test
@@ -102,9 +98,9 @@ public class FitlerTest {
         })
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(Schedulers.newThread())
-                .sample(200, TimeUnit.MILLISECONDS,Schedulers.newThread())
+//                .sample(200, TimeUnit.MILLISECONDS,Schedulers.newThread())
 //                .throttleLast(200, TimeUnit.MILLISECONDS,Schedulers.newThread())
-//                .throttleFirst(200, TimeUnit.MILLISECONDS,Schedulers.newThread())
+                .throttleFirst(200, TimeUnit.MILLISECONDS,Schedulers.newThread())
                 .subscribe(o -> System.out.print(o + "\t"));
         while (true){}
 
@@ -127,7 +123,8 @@ public class FitlerTest {
                 .first(-1)
                 .subscribe(o -> System.out.print(o + "\t"));
 
-        Observable.range(0, 10)
+//        Observable.range(0, 10)
+        Observable.empty()
                 //如果元数据没有发送  则有发送默认值
                 .last(-1)
                 .subscribe(o -> System.out.print(o + "\t"));
@@ -163,7 +160,7 @@ public class FitlerTest {
     public void elementAt() {
 //        只发射第N项数据
         System.out.println("elementAt:");
-        Observable.range(0, 10)
+        Observable.just(1,2)
                 .elementAt(0)
                 .subscribe(o -> System.out.print(o + "\t"));
 
@@ -209,8 +206,8 @@ public class FitlerTest {
 /**
  * 操作符会过滤掉发射速率过快的数据项
  *   throttleWithTimeout/debounce： 含义相同
- *   如果发送数据后 指定时间内没有新数据的话 。则发送这条
- *   如果有新数据 则从新 做上面的逻辑。继续验证 是否发送此条
+ *   如果发送数据后 指定时间段内没有新数据的话 。则发送这条
+ *   如果有新数据 则以这个新数据作为将要发送的数据项，并且重置这个时间段，重新计时。
  */
         Observable.create(e -> {
             e.onNext("onNext 0");
@@ -226,6 +223,7 @@ public class FitlerTest {
             e.onNext("onNext 5");
             e.onNext("onNext 6");
         })
+                .debounce(330, TimeUnit.MILLISECONDS)
 //                .throttleWithTimeout(330, TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(Schedulers.newThread())

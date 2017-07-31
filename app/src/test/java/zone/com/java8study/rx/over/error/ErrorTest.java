@@ -1,14 +1,10 @@
-package zone.com.java8study.rx.error;
+package zone.com.java8study.rx.over.error;
 
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.xml.transform.Source;
-
 import io.reactivex.Observable;
-import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * [2017] by Zone
@@ -26,22 +22,37 @@ public class ErrorTest {
     @Test
     public void retryWhen() {
 
-        System.out.println("\n retryWhen 1:");
+//        System.out.println("\n retryWhen 1:");
         Observable.just(1, "2", 3)
                 .cast(Integer.class)
-                .retryWhen(throwableObservable -> Observable.timer(400, TimeUnit.MILLISECONDS))
-                .subscribe(o -> System.out.println("===>" + o + "\t")
-                        , throwable -> System.out.println("===>throwable")
-                        , () -> System.out.println("===>complete"));
-        //1,1
+                .retryWhen(throwableObservable -> Observable.interval(1, TimeUnit.SECONDS)
+                        .take(3))
+                .subscribe(o -> System.out.println("retryWhen 1===>" + o + "\t")
+                        , throwable -> System.out.println("retryWhen 1===>throwable")
+                        , () -> System.out.println("retryWhen 1===>complete"));
+////        //1,1
 
         System.out.println("\n retryWhen 2:");
         Observable.just(1, "2", 3)
                 .cast(Integer.class)
-                .retryWhen(throwableObservable -> Observable.error(new RuntimeException()))
-                .subscribe(o -> System.out.println("===>" + o + "\t")
-                        , throwable -> System.out.println("===>throwable")
-                        , () -> System.out.println("===>complete"));
+                .retryWhen(throwableObservable -> {
+                    return throwableObservable.switchMap(throwable -> {
+                        if (throwable instanceof IllegalArgumentException)
+                            return Observable.just(throwable);
+//                        else{
+//                            PublishSubject<Object> pb = PublishSubject.create();
+//                            pb .onError(throwable);
+//                            return pb;
+//                        }
+                        else
+                            //方法泛型
+                            return Observable.<Object>error(throwable);
+//                        return Observable.just(1).cast(String.class);
+                    });
+                })
+                .subscribe(o -> System.out.println("retryWhen 2===>" + o + "\t")
+                        , throwable -> System.out.println("retryWhen 2===>throwable")
+                        , () -> System.out.println("retryWhen 2===>complete"));
 
         while (true) {
         }
@@ -58,10 +69,10 @@ public class ErrorTest {
             e.onNext(2);
             e.onError(new Throwable("hehe"));
         })
-                .retry(3)
-                .subscribe(o -> System.out.println("===>" + o + "\t")
-                        , throwable -> System.out.println("===>throwable")
-                        , () -> System.out.println("===>complete"));
+                .retry(2)
+                .subscribe(o -> System.out.print("===>" + o + "\t")
+                        , throwable -> System.out.print("===>throwable\t")
+                        , () -> System.out.print("===>complete\t"));
 
         System.out.println("\n retry by throwable Predicate:");
         Observable.create(e -> {
@@ -72,9 +83,9 @@ public class ErrorTest {
 //这个函数返回一个布尔值，如果返回 true ， retry 应该 再次订阅和镜像原始的Observable，
 // 如果返回 false ， retry 会将最新的一个 onError 通知 传递给它的观察者。
                 .retry(throwable -> throwable.getMessage().equals("hehe1"))
-                .subscribe(o -> System.out.println("===>" + o + "\t")
-                        , throwable -> System.out.println("===>throwable")
-                        , () -> System.out.println("===>complete"));
+                .subscribe(o -> System.out.print("===>" + o + "\t")
+                        , throwable -> System.out.print("===>throwable\t")
+                        , () -> System.out.print("===>complete\t"));
     }
 
     /**
@@ -95,9 +106,9 @@ public class ErrorTest {
                     System.out.println("错误信息：" + throwable.getMessage());
                     return Observable.range(0, 3);
                 })
-                .subscribe(o -> System.out.println("===>" + o + "\t")
-                        , throwable -> System.out.println("===>throwable")
-                        , () -> System.out.println("===>complete"));
+                .subscribe(o -> System.out.print("===>" + o + "\t")
+                        , throwable -> System.out.print("===>throwable" + "\t")
+                        , () -> System.out.print("===>complete" + "\t"));
 
         System.out.println("\n onExceptionResumeNext:");
         Observable.error(new Throwable("我擦 空啊"))
@@ -105,13 +116,16 @@ public class ErrorTest {
                 .subscribe(o -> System.out.println("===>" + o + "\t")
                         , throwable -> System.out.println("===>throwable")
                         , () -> System.out.println("===>complete"));
-//
+
+//       todo 无效ing 求解答~
         System.out.println("\n onExceptionResumeNext2:");
-        Observable.error(new Exception("我擦 空啊"))
+        Observable.error(new IllegalStateException("我擦 空啊"))
                 .onExceptionResumeNext(observer -> Observable.range(0, 3))
-                .subscribe(o -> System.out.println("===>" + o + "\t")
-                        , throwable -> System.out.println("===>throwable")
-                        , () -> System.out.println("===>complete"));
+                .subscribe(o -> System.out.print("===>" + o + "\t")
+                        , throwable -> System.out.print("===>throwable\t")
+                        , () -> System.out.print("===>complete\t"));
+        while (true) {
+        }
     }
 
     //让Observable遇到错误时发射一个特殊的项并且正常终止

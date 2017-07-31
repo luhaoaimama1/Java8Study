@@ -1,6 +1,4 @@
-package zone.com.java8study.rx.tranform;
-
-import android.util.Log;
+package zone.com.java8study.rx.over.tranform;
 
 import org.junit.Test;
 
@@ -16,8 +14,6 @@ import io.reactivex.ObservableSource;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import io.reactivex.observables.GroupedObservable;
-import io.reactivex.observers.DefaultObserver;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -37,65 +33,31 @@ import io.reactivex.schedulers.Schedulers;
 
 public class MapTest {
 
+
     @Test
     public void map() {
-        Observable.create(new ObservableOnSubscribe<Integer>() {
-            @Override
-            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
-                emitter.onNext(1);
-                emitter.onNext(2);
-                emitter.onNext(3);
-            }
-        }).map(new Function<Integer, String>() {
-            @Override
-            public String apply(Integer integer) throws Exception {
-                return "This is result " + integer;
-            }
-        }).subscribe(new Consumer<String>() {
-            @Override
-            public void accept(String s) throws Exception {
-                System.out.println(s);
-            }
-        });
-        delayResult(5000);
+        Observable.just(1, 2)
+                .map(integer -> "This is result " + integer)
+                .subscribe(s -> System.out.println(s));
     }
 
     @Test
     public void flatMap() {
-//        flatMap:I am value 1
-//        flatMap:I am value 2
-//        flatMap:I am value 2
-//        flatMap:I am value 2
-//        flatMap:I am value 3
-//        flatMap:I am value 3
-//        flatMap:I am value 3
-//        flatMap:I am value 1
-//        flatMap:I am value 1
-        Observable.create(new ObservableOnSubscribe<Integer>() {
-            @Override
-            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
-                emitter.onNext(1);
-                emitter.onNext(2);
-                emitter.onNext(3);
-            }
-        }).flatMap(new Function<Integer, ObservableSource<String>>() {
-            @Override
-            public ObservableSource<String> apply(Integer integer) throws Exception {
-                final List<String> list = new ArrayList<>();
-                for (int i = 0; i < 3; i++) {
-                    list.add("flatMap:I am value " + integer);
-                }
-                return Observable.fromIterable(list).delay(5, TimeUnit.MILLISECONDS);
-            }
-        }).subscribe(new Consumer<String>() {
-            @Override
-            public void accept(String s) throws Exception {
-                System.out.println(s);
-            }
-        });
+//        注意:FlatMap 对这些Observables发射的数据做的是合并( merge )操作，因此它们可能是交 错的。
+
+
+        Observable.just(1, 2, 3)
+                .flatMap(integer -> Observable.range(integer * 10, 2)
+                        , (a, b) -> {
+                            //a ： 原始数据的 just(1,2,3) 中的值
+                            //b ： 代表 flatMap后合并发送的数据的值
+                            System.out.print("\n a:" + a + "\t b:" + b);
+                            //return flatMap发送的值 ，经过处理后 而发送的值
+                            return a + b;
+                        })
+                .subscribe(s -> System.out.print("\t" + s));
 
 //combiner 用来合并 的
-
 // maxConcurrency ：这个参数设置 flatMap 从原来的 Observable映射Observables的最大同时订阅数
 // 当达到这个限制时，它会等待其中一个终止 然后再订阅另一个。  测不出来
 
@@ -124,7 +86,6 @@ public class MapTest {
     }
 
 
-
     @Test
     //groupBy 通过apply的值当做key 进行分组
     //groupBy后生成的 GroupedObservable .subscibe 订阅每个group  每个group.subscibe在订阅 则是最后的结果
@@ -134,15 +95,11 @@ public class MapTest {
     // todo Observable又发射了一个与这个Observable的Key匹配的数据， groupBy 将会为这个Key创建 一个新的 GroupedObservable 。
     public void groupBy() {
         Observable.range(0, 10)
-                .groupBy(new Function<Integer, Integer>() {
-
-                    @Override
-                    public Integer apply(Integer i) {
-                        return i % 2;
-                    }
-                }).subscribe(group -> {
-            group.subscribe(integer -> System.out.println("key:" + group.getKey() + "==>" + integer));
-        });
+                .groupBy(integer -> integer % 2, integer -> "(" + integer + ")")
+                .subscribe(group -> {
+                    group.subscribe(integer -> System.out.println(
+                            "key:" + group.getKey() + "==>value:" + integer));
+                });
 
 
         Observable<String> source = Observable.fromIterable(Arrays.asList(
@@ -178,11 +135,11 @@ public class MapTest {
         Function<String, String> valuesel = new Function<String, String>() {
             @Override
             public String apply(String t1) {
-                return t1 +"__"+ t1;
+                return t1 + "__" + t1;
             }
         };
 
-       source.groupBy(keysel, valuesel).subscribe(group -> {
+        source.groupBy(keysel, valuesel).subscribe(group -> {
             group.subscribe(integer -> System.out.println("key:" + group.getKey() + "==>" + integer));
         });
         while (true) {
@@ -192,10 +149,10 @@ public class MapTest {
     @Test
 //    在发射之前强制将Observable发射的所有数据转换为指定类型
     public void cast() {
-        Observable<?> source = Observable.just(1, 2,"string");
-        Observable<Integer> observable = source.cast(Integer.class);//订阅之后才能发横强转
-        observable.subscribe(integer -> System.out.println(integer)
-                ,throwable -> System.out.println("错误了哈"));
+        Observable.just(1, 2, "string")
+                .cast(Integer.class)//订阅之后才能发横强转
+                .subscribe(integer -> System.out.println(integer)
+                        , throwable -> System.out.println(throwable.getMessage()));
 
     }
 
@@ -204,39 +161,57 @@ public class MapTest {
 //     这个操作符在某些情况下被叫做 accumulator 累加器。
 // TODO 图非常好  记得看
     public void scan() {
-        Observable.just(1, 2,5,4)
-                .scan((a, b) -> {
-            //b 是just元数据的值
-            //a 则是最后应用scan 发送的值
-                    System.out.format("a:%d\tb:%d\n",a,b);
-                    return a*b;
-                })
-                .subscribe(integer -> System.out.println(integer));
+//        Observable.just(1, 2, 5, 4)
+//                .scan((a, b) -> {
+//                    //b 是just元数据的值
+//                    //a 则是最后应用scan 发送的值
+//                    System.out.format("a:%d\tb:%d\n", a, b);
+//                    return a * b;
+//                })
+//                .subscribe(integer -> System.out.println(integer));
 
-        Observable.just(1, 2,5,4)
+        Observable.just(1, 4, 2)
                 //7是用来 对于第一次的 a的值
-                .scan(7,(a, b) -> {
+                .scan(7, (a, b) -> {
                     //b 是just元数据的值
                     //a 则是最后应用scan 发送的值
-                    System.out.format("a:%d\tb:%d\n",a,b);
-                    return a*b;
+                    System.out.format("a:%d * b:%d\n", a, b);
+                    return a * b;
                 })
-                .subscribe(integer -> System.out.println(integer));
+                .subscribe(integer -> System.out.println("===>：" + integer));
+    }
 
-    }
     @Test
-//    定期将来自Observable的数据分拆成一些Observable窗口，然后发射这些窗口，而不是每次发射一项
-//    类似group的能力
+    /*
+     * Example using window operator -> It periodically
+     * subdivide items from an Observable into
+     * Observable windows and emit these windows rather than
+     * emitting the items one at a time
+     *
+     * 依照此范例
+     * 每三秒收集,Observable在此时间内发送的值。组装成 Observable。最后发送出去。
+     */
     public void window() {
-        Observable.just(2,3,5,6,7)
-                .window(3)
-                .subscribe(integerObservable ->{
+        Observable.interval(1, TimeUnit.SECONDS).take(7)
+                //返回值  Observable<Observable<T>> 即代表 发送Observable<T>
+                .window(3, TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(integerObservable -> {
                     System.out.println(integerObservable);
-                    integerObservable.subscribe(integer -> System.out.println(integer));
+                    integerObservable.subscribe(integer -> System.out.println(integerObservable+"===>"+integer));
                 });
+        while (true) {
+        }
     }
+
     @Test
     public void concatMap() {
+
+        Observable.just(1, 2, 3)
+                .concatMap(integer -> Observable.range(integer * 10, 2))
+                .subscribe(s -> System.out.print("\t" + s));
+
 //        concatMap:I am value 1
 //        concatMap:I am value 1
 //        concatMap:I am value 1

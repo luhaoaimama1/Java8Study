@@ -1,4 +1,4 @@
-package zone.com.java8study.rx;
+package zone.com.java8study.rx.over;
 
 import org.junit.Test;
 
@@ -33,40 +33,6 @@ import io.reactivex.disposables.Disposable;
  *   compositeDisposable.clear();
  */
 public class EmitterTest {
-
-    @Test
-    public void start() {
-        //创建一个上游 Observable：
-        Observable.create(new ObservableOnSubscribe<Integer>() {
-            @Override
-            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
-                emitter.onNext(1);
-                emitter.onNext(2);
-                emitter.onComplete();
-            }
-        }).subscribe(//建立连接
-                new Observer<Integer>() { //创建一个下游 Observer
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        System.out.println("subscribe");
-                    }
-
-                    @Override
-                    public void onNext(Integer value) {
-                        System.out.println("onNext:" + value);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        System.out.println("error");
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        System.out.println("complete");
-                    }
-                });
-    }
 
     @Test
     public void complete() {
@@ -207,6 +173,7 @@ public class EmitterTest {
                 emitter.onComplete();
                 System.out.println("emit 3");
                 emitter.onNext(3);
+                emitter.onError(new Throwable("O__O "));
             }
         }).subscribe(new Observer<Integer>() {
             private Disposable mDisposable;

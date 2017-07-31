@@ -1,4 +1,4 @@
-package zone.com.java8study.rx.helper;
+package zone.com.java8study.rx.over.helper;
 
 import org.junit.Test;
 
@@ -98,10 +98,6 @@ public class ToTest {
         }
     }
 
-    @Test
-    public void blockingNext() {
-
-    }
 
     @Test
     public void blockingFirst2Last() {
@@ -154,7 +150,6 @@ public class ToTest {
         //   empty   无默认值 报错， 默认值的话显示默认值
         //   多个值的话  有无默认值都报错
         System.out.println("emit 1 value:" + Observable.just(1).blockingSingle());
-
         System.out.println("default empty single:" + Observable.empty().blockingSingle(-1));
         System.out.println("default emit 1 value:" + Observable.just(1).blockingSingle(-1));
 

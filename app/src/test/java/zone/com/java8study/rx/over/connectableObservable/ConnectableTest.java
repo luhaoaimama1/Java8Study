@@ -1,12 +1,10 @@
-package zone.com.java8study.rx.connectableObservable;
+package zone.com.java8study.rx.over.connectableObservable;
 
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.functions.Function;
 import io.reactivex.observables.ConnectableObservable;
 
 /**
@@ -32,16 +30,28 @@ public class ConnectableTest {
 
     @Test
     public void replay() {
-        //todo demo无效！
-        ConnectableObservable<Integer> co = Observable.just(1, 2, 3)
-                //保证所有的观察者收到相同的数据序列，即使它们在Observable开始发射数据之后才订阅
-                .replay(3)
-                .publish();//publish转成ConnectableObservable
-        co.connect();//此时开始发射数据 不同与 refCount 只发送一次
-        co.subscribe(integer -> System.out.println("订阅1：" + integer));
-        co.subscribe(integer -> System.out.println("订阅2：" + integer));
 
-        co.subscribe(integer -> System.out.println("订阅3：" + integer));
+        //this  is  OK,too!
+        ConnectableObservable<Integer> co = Observable.just(1, 2, 3)
+                //类似 publish直接转成 ConnectableObservable  切记要重复播放的话必须Obserable的时候调用replay
+                //而不是ConnectableObservable 的时候调用replay 所以 .publish().replay()则无效
+                .replay(3);//重复播放的 是1  2  3
+//                .replay(2);//重复播放的 是 2  3
+
+        co.doOnSubscribe(disposable -> System.out.print("订阅1："))
+                .doFinally(() -> System.out.println())
+                .subscribe(integer -> System.out.print(integer + "\t"));
+        co.connect();//此时开始发射数据 不同与 refCount 只发送一次
+
+        co.doOnSubscribe(disposable -> System.out.print("订阅2："))
+                .doFinally(() -> System.out.println())
+                .subscribe(integer -> System.out.print(integer + "\t"));
+
+        co.doOnSubscribe(disposable -> System.out.print("订阅3："))
+                .doFinally(() -> System.out.println())
+                .subscribe(integer -> System.out.print(integer + "\t"));
+        while (true) {
+        }
     }
 
     //skip系列是 从某一个位置到结束
@@ -50,7 +60,8 @@ public class ConnectableTest {
         ConnectableObservable<Integer> co = Observable.just(1, 2, 3)
                 .publish();//publish转成ConnectableObservable
 
-        co.subscribe(integer -> System.out.println("订阅1：" + integer));
+        co.doFinally(() -> System.out.println())
+                .subscribe(integer -> System.out.print("订阅1：" + integer));
         co.subscribe(integer -> System.out.println("订阅2：" + integer));
         co.subscribe(integer -> System.out.println("订阅3：" + integer));
         co.connect();//此时开始发射数据 不同与 refCount 只发送一次
@@ -74,12 +85,18 @@ public class ConnectableTest {
                 //类似于reply  跟时间线有关  订阅开始就开始发送
                 .refCount();
 
-        co.subscribe(integer -> System.out.println("订阅1：" + integer));
-        co.subscribe(integer -> System.out.println("订阅2：" + integer));
+        co.doOnSubscribe(disposable -> System.out.print("订阅1："))
+                .doFinally(() -> System.out.println())
+                .subscribe(integer -> System.out.print(integer + "\t"));
+        co.doOnSubscribe(disposable -> System.out.print("订阅2："))
+                .doFinally(() -> System.out.println())
+                .subscribe(integer -> System.out.print(integer + "\t"));
 
         Observable.timer(300, TimeUnit.MILLISECONDS)
                 .doOnComplete(() -> {
-                    co.subscribe(integer -> System.out.println("订阅3：" + integer));
+                    co.doOnSubscribe(disposable -> System.out.print("订阅3："))
+                            .doFinally(() -> System.out.println())
+                            .subscribe(integer -> System.out.print(integer + "\t"));
                 }).blockingSubscribe();
 
     }

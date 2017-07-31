@@ -1,21 +1,15 @@
-package zone.com.java8study.rx.tranform;
+package zone.com.java8study.rx.over.tranform;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.Observer;
-import io.reactivex.Scheduler;
-import io.reactivex.disposables.Disposables;
-import io.reactivex.functions.Function;
+import io.reactivex.functions.Consumer;
 import io.reactivex.internal.functions.Functions;
-import io.reactivex.internal.operators.observable.ObservableBufferTimed;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -28,6 +22,25 @@ import io.reactivex.schedulers.Schedulers;
  * skip则代表 每次初始偏移量  每次真正的起始值=fistValue+skip*skipCount;
  * <p>
  * bufferSupplier 为缓存装载的容器；
+ * <p>
+ * onNext 里的泛型是List
+ * <p>
+ * <p>
+ * <p>
+ * For exmaple2:
+ * Observable.just("one", "two", "three", "four", "five")
+ * .buffer(3, 1)
+ * .subscribe(integers -> System.out.println(integers));
+ * <p>
+ * <p>
+ * 3 means,  it takes max of three from its start index and create list
+ * 1 means, it jumps one step every time
+ * so the it gives the following list
+ * 1 - one, two, three
+ * 2 - two, three, four
+ * 3 - three, four, five
+ * 4 - four, five
+ * 5 - five
  */
 public class BufferTest {
 
@@ -43,39 +56,22 @@ public class BufferTest {
 //        然后重复这个过程:开始组装一个新 的 List
 //   todo 这个缓存可以是 不连续的！  因为 这个有两个事件 个开始事件 和结束事件 。结束事件后 不发生开始事件则导致不连续！
     public void openings2closer() {
-        Observable<Object> openings = Observable.create(e -> {
-            System.out.println("发送数据 提示可以创建");
-            e.onNext(0);//发送任何数据都可以 开始创建 缓存装载的容器；
-            e.onComplete();//开始创建 缓存装载的容器；
-        });
 
-        Function<Object, Observable<Object>> closer = new Function<Object, Observable<Object>>() {
-            @Override
-            public Observable<Object> apply(Object opening) {
-                System.out.println("apply opening:" + opening);
-                return Observable.unsafeCreate(new ObservableSource<Object>() {
-                    @Override
-                    public void subscribe(Observer<? super Object> observer) {
-                        Observable.timer(100, TimeUnit.MILLISECONDS)
-                                .subscribe(aLong -> {
-                                    //为什么 这个log会发射在发送数据之后呢  因为这段时间 原始发送的数据已经发没了
-                                    // 自然不需要你去关闭了
-                                    // 可以把100换成1  那样的话  log就在前面了
-                                    System.out.println("发送数据关闭缓存 并把此缓存发射");
-                                    //未发送数据的时候 一直手机
-                                    //如果发送数据 就会 开始关闭 缓存装载的容器 并发送；
-                                    observer.onNext(0);
-                                    observer.onComplete();//开始创建 缓存装载的容
-                                });
-                    }
-                });
-            }
-        };
+        System.out.println("openings:");
+        Consumer<Long> longConsumer = aLong -> System.out.println("开始创建 bufferSupplier");
+        Consumer<Long> longConsumer2 = aLong -> System.out.println("结束收集");
+        Observable.interval(500, TimeUnit.MILLISECONDS).take(7)
+//                .doOnNext(aLong -> System.out.println("原始发射物：" + aLong))
+                .buffer(Observable.interval(2, TimeUnit.SECONDS)
+                                .startWith(-1L)//为了刚开始就发射一次
+                                .take(2)//多余的我就不创建了
+                                .doOnNext(longConsumer)
+                        , aLong -> Observable.timer(3, TimeUnit.SECONDS)
+                                .doOnNext(longConsumer2)
+                        , () -> new ArrayList<>())
+                .subscribe(integers -> System.out.println("buffer发射物" + integers));
 
-        Observable.range(1, 100)
-                .subscribeOn(Schedulers.io())
-                .buffer(openings, closer, () -> new ArrayList<>())
-                .subscribe(integers -> System.out.println(integers));
+
         while (true) {
 
         }
@@ -85,21 +81,14 @@ public class BufferTest {
     @Test
     //  boundarySupplier  每当这个Observable发射了一个 值，
     // 它就创建一个新的 List 开始收集来自原始Observable的数据并发射原来的 List
-    //todo 这个缓存是连续的  因为 发送一个值代表 上个的结束 和这个开始
+    //todo 这个缓存是连续的, 因为发送一个值代表上个缓存的发送 和这个缓存的创建
     //FIXME: 注意 如果不发送事件缓存 存满了 会自动发送出去的
     public void boundarySupplier() {
-        Observable.range(1, 100)
-//                .subscribeOn(Schedulers.io())//要加线程 不然同一个线程会导致  顺序执行
-//                .buffer(new ObservableSource<Object>() {
-//                    @Override
-//                    public void subscribe(Observer<? super Object> observer) {
-//                        observer.onNext(1);
-//                    }
-//                })
-                .buffer(() -> {
-                    return Observable.timer(2, TimeUnit.MILLISECONDS)
-                            .doOnNext(aLong -> System.out.println("监控 buffer emitter点"));
-                }, () -> new ArrayList<Object>())
+
+        Observable.interval(500, TimeUnit.MILLISECONDS).take(7)
+                .buffer(() -> Observable.timer(2, TimeUnit.SECONDS)
+                                .doOnNext(aLong -> System.out.println("开始创建 bufferSupplier"))
+                        , () -> new ArrayList<Object>())
                 .subscribe(integers -> System.out.println(integers));
         while (true) {
         }
@@ -147,11 +136,14 @@ public class BufferTest {
         Observable.range(1, 100)
                 .buffer(1, 2, TimeUnit.MILLISECONDS, Schedulers.single())
                 .subscribe(integers -> System.out.println(integers));
-
-        Observable.range(1, 100)
-                .buffer(1, 2, TimeUnit.MILLISECONDS, Schedulers.single(),
-                        Functions.<Integer>createArrayList(16))
+//
+        Observable.interval(500, TimeUnit.MILLISECONDS).take(7)
+                .buffer(3, 2, TimeUnit.SECONDS, Schedulers.single(),
+                        Functions.createArrayList(16))
                 .subscribe(integers -> System.out.println(integers));
+
+        while (true) {
+        }
 
     }
 
@@ -167,7 +159,7 @@ public class BufferTest {
                 .subscribe(integers -> System.out.println(integers));
 
         Observable.range(1, 10)
-                .buffer(2, 1)//有默认的装载器
+                .buffer(2, 1, () -> new ArrayList<>())//有默认的装载器
                 .subscribe(integers -> System.out.println(integers));
     }
 

@@ -1,26 +1,13 @@
-package zone.com.java8study.rx.start;
+package zone.com.java8study.rx.over.start;
 
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.ObservableSource;
-import io.reactivex.Observer;
-import io.reactivex.Scheduler;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.BooleanSupplier;
-import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import zone.com.java8study.utils.GsonUtils;
 
 /**
  * [2017] by Zone
@@ -40,6 +27,7 @@ public class StartSymbolTest {
             e.onNext("Love");
             e.onNext("For");
             e.onNext("You!");
+            e.onComplete();
         }).subscribe(s -> System.out.println(s));
     }
 
@@ -73,53 +61,11 @@ public class StartSymbolTest {
 
 
     @Test
-    public void repeat() {
-        //    repeat 方法。它不是创建一个Observable，而是重复发射原始
-// Observable的数据序列，这个序列或者是无限的，或者通过 repeat(n) 指定重复次数
-        Observable.just("Love", "For", "You!")
-                .repeat(3)//重复三次
-                .subscribe(s -> System.out.println(s));
-
-
-        System.out.println("-----repeatUntil-----");
-
-        //repeatUntil getAsBoolean 如果返回 true则不repeat false则repeat
-        //主要用于动态控制
-        Observable.just("Love", "For", "You!")
-                .repeatUntil(new BooleanSupplier() {
-                    @Override
-                    public boolean getAsBoolean() throws Exception {
-                        System.out.println("getAsBoolean");
-                        count++;
-                        if (count == 3)
-                            return true;
-                        else
-                            return false;
-                    }
-                }).subscribe(s -> System.out.println(s));
-
-
-        System.out.println("-----repeatWhen -----");
-        /**
-         * repeatWhen 暂时看不出来有啥用
-         */
-    }
-
-    boolean booleanV;
-    int count;
-
-    @Test
 //    直到有观察者订阅时才创建Observable，并且为每个观察者创建一个新的Observable
     public void defer() {
-        Observable.defer(new Callable<ObservableSource<?>>() {
-            @Override
-            public ObservableSource<?> call() throws Exception {
-                //返回一个 Observable
-                return Observable.just("Love", "For", "You!");
-            }
-        }).subscribe(s -> System.out.println(s));
+        Observable.defer(() -> Observable.just("Love", "For", "You!"))
+                .subscribe(s -> System.out.println(s));
     }
-
 
 
     @Test
@@ -181,24 +127,19 @@ public class StartSymbolTest {
 //        todo 注意是 当一个订阅者订阅时
         Integer[] items = {0, 1, 2, 3, 4, 5};
         Observable.fromArray(items).subscribe(
-                integer -> System.out.println(integer)
-                , throwable -> System.out.println()
-                , () -> System.out.println("fromArray complete!"));
+                integer -> System.out.println(integer));
 
         System.out.println("------fromCallable------");
         /**
          *  todo 注意是 当一个订阅者订阅时，它执行这 个Callable并发射Callable的返回值 只能返回一个值 Callable
          */
-        Observable.fromCallable(() -> Arrays.asList("hello","gaga"))
+        Observable.fromCallable(() -> Arrays.asList("hello", "gaga"))
                 .subscribe(strings -> System.out.println(strings));
 
 
         System.out.println("------fromIterable------");
         Observable.fromIterable(Arrays.<String>asList("one", "two", "three"))
-                .subscribe(
-                        integer -> System.out.println(integer)
-                        , throwable -> System.out.println()
-                        , () -> System.out.println("fromIterable complete!"));
+                .subscribe(integer -> System.out.println(integer));
 
 
         System.out.println("------fromFuture------");
@@ -211,18 +152,12 @@ public class StartSymbolTest {
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertFailure(TimeoutException.class);
 
+        Observable.fromFuture(Observable.just(1).toFuture())
+                .doOnComplete(() -> System.out.println("complete"))
+                .subscribe();
 
-
-        while (true) {}
-    }
-
-
-    private void delayResult(long millis) {
-        //todo 必须进行延时 不然执行完毕 就不管以后的内容了 执行之后的结果了
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while (true) {
         }
     }
+
 }

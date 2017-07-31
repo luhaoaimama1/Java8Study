@@ -1,4 +1,4 @@
-package zone.com.java8study.rx.helper;
+package zone.com.java8study.rx.over.helper;
 
 import org.junit.Test;
 
@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Action;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -18,10 +17,7 @@ public class HelperTest {
     @Test
     public void Timestamp() {
         Observable.interval(100, TimeUnit.MILLISECONDS)
-                .doOnNext(aLong -> {
-                    if (aLong == 10)
-                        throw new RuntimeException();
-                })
+               .take(3)
                 //它将一个发射T类型数据的Observable转换为一个发射类型 为
                 // Timestamped<T> 的数据的Observable，每一项都包含数据的原始发射时间
                 .timestamp()
@@ -55,7 +51,6 @@ public class HelperTest {
                         , throwable -> System.out.println("===>timeout2 throwable")
                         , () -> System.out.println("===>timeout2 complete")
                         , disposable -> System.out.println("===>timeout2 订阅"));
-
         other.subscribe(o -> System.out.println("k ===>" + o + "\t"));
         while (true) {
         }
@@ -64,13 +59,9 @@ public class HelperTest {
     @Test
     public void timeInterval() {
         Observable.interval(100, TimeUnit.MILLISECONDS)
-                .doOnNext(aLong -> {
-                    if (aLong == 10)
-                        throw new RuntimeException();
-                })
+                .take(3)
 //         把发送的数据 转化为  相邻发送数据的时间间隔实体
                 .timeInterval()
-//                变体
 //                .timeInterval(Schedulers.newThread())
                 .subscribe(o -> System.out.println("===>" + o + "\t")
                         , throwable -> System.out.println("===>throwable")
@@ -131,8 +122,8 @@ public class HelperTest {
         System.out.println("\ndoOnEach:");
 //       注册一个回调，它产生的Observable每发射一项数据就会调用它一 次
         Observable.range(0, 3)
-                .doOnEach(integerNotification -> System.out.println(integerNotification.getValue()))
-                .subscribe(o -> System.out.print("===>" + o + "\t"));
+                .doOnEach(integerNotification -> System.out.print("doOnEach:"+integerNotification.getValue()))
+                .subscribe(o -> System.out.print("===>" + o + "\t\n "));
 
 
         System.out.println("\ndoOnNext:");
@@ -140,7 +131,7 @@ public class HelperTest {
         Observable.range(0, 3)
                 .doOnNext(integer -> {
                     if (integer == 2)
-                        throw new RuntimeException("aha");
+                        throw new Error("O__O");
                     System.out.print(integer);
                 })
                 .subscribe(o -> System.out.print("===>" + o + "\t")
@@ -161,7 +152,7 @@ public class HelperTest {
 
 //注册一个动作，在观察者doOnError时使用
         System.out.println("\ndoOnError:");
-        Observable.range(0, 3)
+        Observable.error(new Throwable("?"))
                 .doOnError(throwable -> System.out.print("throwable"))
                 .subscribe(o -> System.out.print("===>" + o + "\t"));
 
@@ -169,8 +160,8 @@ public class HelperTest {
         System.out.println("\ndoOnTerminate:");
         Observable.range(0, 3)
                 .doOnTerminate(() -> System.out.print("\t doOnTerminate"))
-
                 .subscribe(o -> System.out.print("===>" + o + "\t"));
+
 //注册一个动作，当它产生的Observable终止之后会被调用，无论是正常还 是异常终止。在doOnTerminate之后执行
         System.out.println("\ndoFinally:");
         Observable.range(0, 3)
@@ -180,11 +171,12 @@ public class HelperTest {
 
 
 //当观察者取消订阅它生成的Observable它就会被调
-        //FIXME demo无效  为何不懂
         System.out.println("\ndoOnDispose:");
-        Observable.just(1)
+        Disposable ab = Observable.interval(1, TimeUnit.SECONDS)
+                .take(3)
                 .doOnDispose(() -> System.out.println("解除订阅"))
-                .unsubscribeOn(Schedulers.single());
+                .subscribe(o -> System.out.print("===>" + o + "\t"));
+        ab.dispose();
 
         while (true) {
         }
@@ -196,19 +188,19 @@ public class HelperTest {
 //        延迟一段指定的时间在发射
 //todo  delay 不会平移 onError 通知，它会立即将这个通知传递给订阅者，同时丢弃任何待 发射的 onNext 通知。
 //todo 然而它会平移一个 onCompleted 通知
-        Observable.range(0, 3)
-                .delay(1400, TimeUnit.MILLISECONDS)
-                .subscribe(o -> System.out.println("===>" + o + "\t"));
+//        Observable.range(0, 3)
+//                .delay(1400, TimeUnit.MILLISECONDS)
+//                .subscribe(o -> System.out.println("===>" + o + "\t"));
 
 
 //        delaySubscription 让你你可以延迟订阅原始Observable。
         // FIXME: 2017/7/24 delaySubscription demo不成立  等待中
-        Observable<Integer> ob = Observable.range(10, 3)
-                .delaySubscription(2000, TimeUnit.MILLISECONDS);
-        ob.subscribe(o -> System.out.println("===>" + o + "\t")
-                , throwable -> System.out.println("===>throwable")
-                , () -> System.out.println("===>complete")
-                , disposable -> System.out.println("===>订阅"));
+        Observable.just(1)
+                .delaySubscription(2000, TimeUnit.MILLISECONDS)
+                .subscribe(o -> System.out.println("===>" + o + "\t")
+                        , throwable -> System.out.println("===>throwable")
+                        , () -> System.out.println("===>complete")
+                        , disposable -> System.out.println("===>订阅"));
         while (true) {
         }
     }

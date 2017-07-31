@@ -1,9 +1,7 @@
-package zone.com.java8study.rx.condition;
+package zone.com.java8study.rx.over.condition;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -98,13 +96,6 @@ public class ConditionTest {
         Observable.just(2, 3, 4)
                 .all(integer -> integer > 3)
                 .subscribe((aBoolean, throwable) -> System.out.println(aBoolean));
-
-
-        Observable.just(2, 3, 4)
-                .all(integer -> integer > 3)
-                .subscribe((aBoolean, throwable) -> System.out.println(aBoolean));
-
-
     }
 
 
@@ -118,7 +109,7 @@ public class ConditionTest {
         Observable.empty()
 //        如果原始Observable正常终止后仍然没有发射任何数据，就发射一个默认值,内部调用的switchIfEmpty。
                 .defaultIfEmpty(1)
-                .subscribe(o -> System.out.println("===>" + o + "\t")); //2,3,4
+                .subscribe(o -> System.out.println("===>" + o + "\t")); //1
     }
 
 
@@ -128,16 +119,16 @@ public class ConditionTest {
 
 //        用法1  静态多个
         Observable.ambArray(
-                Observable.intervalRange(0, 10, 200, 100, TimeUnit.MILLISECONDS)
-                , Observable.intervalRange(10, 10, 300, 100, TimeUnit.MILLISECONDS)
-                , Observable.intervalRange(20, 10, 100, 100, TimeUnit.MILLISECONDS)
+                Observable.intervalRange(0, 3, 200, 100, TimeUnit.MILLISECONDS)
+                , Observable.intervalRange(10, 3, 300, 100, TimeUnit.MILLISECONDS)
+                , Observable.intervalRange(20, 3, 100, 100, TimeUnit.MILLISECONDS)
         )
                 .doOnComplete(() -> System.out.println("Complete"))
                 .subscribe(aLong -> System.out.println(aLong));
 
         //   ambWith   非静态一个
-        Observable.intervalRange(0, 10, 200, 100, TimeUnit.MILLISECONDS)
-                .ambWith(Observable.intervalRange(10, 10, 300, 100, TimeUnit.MILLISECONDS))
+        Observable.intervalRange(0, 3, 200, 100, TimeUnit.MILLISECONDS)
+                .ambWith(Observable.intervalRange(10, 3, 300, 100, TimeUnit.MILLISECONDS))
                 .doOnComplete(() -> System.out.println("Complete"))
                 .subscribe(aLong -> System.out.println(aLong));
 
